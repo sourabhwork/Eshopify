@@ -1,4 +1,4 @@
-//
+ //
 //  AppDelegate.swift
 //  Eshopify
 //
@@ -8,15 +8,61 @@
 
 import UIKit
 import CoreData
+import MMDrawerController
+import FBSDKCoreKit
+import FBSDKLoginKit
+import GoogleSignIn
+import SVProgressHUD
+
+protocol AppDelegateProtocol: class {
+    func didDisplayProducts(category: Category)
+}
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
+   
+    
+    
     var window: UIWindow?
-
+    var centerContainer: MMDrawerController?
+    fileprivate var categoryTableVC: CategoryTableVC!
+    weak var delegate: AppDelegateProtocol?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+      
+        FBSDKApplicationDelegate.sharedInstance().application(application, didFinishLaunchingWithOptions: launchOptions)
+
+        setupProgressView()
+        //initialise sign-in
+        GIDSignIn.sharedInstance().clientID = "523202177910-gl0k1k8ko1c55c8tf4hc4imsb148o8bq.apps.googleusercontent.com"
+        GIDSignIn.sharedInstance().delegate = self
+
+        window = UIWindow()
+
+        //let rootViewController = self.window?.rootViewController
+        let mainStoryboard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+
+        let centralViewController = mainStoryboard.instantiateViewController(withIdentifier: "initialVC") as! InitialVC
+        //let centralViewController = mainStoryboard.instantiateViewController(withIdentifier: "homeVC") as! HomeVC
+         categoryTableVC = mainStoryboard.instantiateViewController(withIdentifier: "categoryTableVC") as! CategoryTableVC
+        categoryTableVC.delegate = self
+
+        let leftSideNav =   UINavigationController(rootViewController: categoryTableVC)
+        let centralNav = UINavigationController(rootViewController: centralViewController)
+
+        centerContainer = MMDrawerController(center: centralNav, leftDrawerViewController: leftSideNav)
+    
+        centerContainer?.openDrawerGestureModeMask = .panningCenterView
+        centerContainer?.closeDrawerGestureModeMask = .panningCenterView
+
+        //centerContainer?.centerHiddenInteractionMode = .navigationBarOnly
+        centerContainer?.showsShadow = true
+
+        //centerContainer?.maximumLeftDrawerWidth = 180
+        centerContainer?.maximumLeftDrawerWidth = UIScreen.main.bounds.width / 2
+
+        window?.rootViewController = centerContainer
+        window?.makeKeyAndVisible()
         return true
     }
 
@@ -91,3 +137,61 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 }
 
+extension AppDelegate {
+    
+    func configureCategory(categoryArr: Array<Category>) {
+        //categoryTableVC.categoryArray = categoryArr
+        categoryTableVC.configureCategoryMenu(categoryArr: categoryArr)
+    }
+    
+    func setupProgressView() {
+        SVProgressHUD.setDefaultStyle(.light)
+        SVProgressHUD.setDefaultAnimationType(.flat)
+        SVProgressHUD.setDefaultMaskType(.gradient)
+    }
+    
+    func setupDrawerController() {
+        
+    }
+}
+
+extension AppDelegate : CatgoryTableVCDelegate {
+    
+    func didDisplayProducts(cateogry: Category) {
+        delegate?.didDisplayProducts(category: cateogry)
+    }    
+    
+}
+
+
+extension AppDelegate {
+    
+    func application(_ application: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
+        let handled: Bool = FBSDKApplicationDelegate.sharedInstance().application(application, open: url, sourceApplication: options[UIApplicationOpenURLOptionsKey.sourceApplication] as? String, annotation: options[UIApplicationOpenURLOptionsKey.annotation])
+        // Add any custom logic here.
+        return handled ||
+        GIDSignIn.sharedInstance().handle(url as URL?,
+                                                 sourceApplication: options[UIApplicationOpenURLOptionsKey.sourceApplication] as? String,
+                                                 annotation: options[UIApplicationOpenURLOptionsKey.annotation])
+    }
+}
+
+extension AppDelegate: GIDSignInDelegate  {
+    
+    func sign(_ signIn: GIDSignIn!, didSignInFor user: GIDGoogleUser!, withError error: Error!) {
+        if let error = error {
+            print("\(error.localizedDescription)")
+        } else {
+            // Perform any operations on signed in user here.
+            let userId = user.userID                  // For client-side use only!
+            let idToken = user.authentication.idToken // Safe to send to the server
+            let fullName = user.profile.name
+            let givenName = user.profile.givenName
+            let familyName = user.profile.familyName
+            let email = user.profile.email
+            // ...
+        }
+    }
+    
+    
+}

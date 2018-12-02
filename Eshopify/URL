@@ -1,0 +1,21 @@
+Project
+http://evening-tundra-86781.herokuapp.com
+
+Category
+http://evening-tundra-86781.herokuapp.com/api/categories
+
+Product
+http://evening-tundra-86781.herokuapp.com/api/categories/1/products
+
+Images
+http://evening-tundra-86781.herokuapp.com/getImage/list?imageName=
+http://evening-tundra-86781.herokuapp.com/getImage/list?imageName=sonym4.jpeg
+
+
+Login
+http://evening-tundra-86781.herokuapp.com/authenticate
+http://evening-tundra-86781.herokuapp.com/authenticate/?email=admin&password=admin
+
+
+# For AR and VR
+https://www.oculusconnect.com/?ref=dfc_home
